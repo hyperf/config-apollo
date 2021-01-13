@@ -1,5 +1,5 @@
 {
-  "name": "xskit/config-apollo",
+  "name": "hyperf/config-apollo",
   "description": "An apollo adapter for Hyperf config component.",
   "license": "MIT",
   "keywords": [
