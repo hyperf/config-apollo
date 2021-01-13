@@ -9,6 +9,7 @@ declare(strict_types=1);
  * @contact  group@hyperf.io
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
+
 namespace HyperfTest\ConfigApollo;
 
 use Hyperf\Config\Config;
@@ -30,7 +31,8 @@ class ClientTest extends TestCase
     public function testPull()
     {
         $option = new Option();
-        $option->setServer('http://127.0.0.1:8080')->setAppid('test')->setCluster('default')->setClientIp('127.0.0.1');
+        $option->setServer('http://127.0.0.1:8080')->setAppid('test')->setCluster('default')
+            ->setSecret('b0224a48805442ebacceb0431d98b2bf')->setClientIp('127.0.0.1');
         $container = Mockery::mock(ContainerInterface::class);
         $configInstance = new Config([]);
         $configInstance->set('apollo.test-key', 'pre-value');

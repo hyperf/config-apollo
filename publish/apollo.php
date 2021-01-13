@@ -20,4 +20,6 @@ return [
     ],
     'interval' => 5,
     'strict_mode' => false,
+    // 密钥配置
+    'secret' => '',
 ];

@@ -24,14 +24,15 @@
         "hyperf/utils": "~2.1.0"
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2.9",
         "hyperf/config": "~2.1.0",
         "hyperf/event": "~2.1.0",
         "hyperf/framework": "~2.1.0",
+        "hyperf/guzzle": "^2.1",
         "hyperf/process": "~2.1.0",
         "malukenho/docheader": "^0.1.6",
         "mockery/mockery": "^1.0",
-        "phpunit/phpunit": "^9.4",
-        "friendsofphp/php-cs-fixer": "^2.9"
+        "phpunit/phpunit": "^9.4"
     },
     "suggest": {
         "hyperf/process": "Use hyperf process to run ConfigFetcherProcess."
