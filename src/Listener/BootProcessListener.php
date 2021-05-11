@@ -9,8 +9,10 @@ declare(strict_types=1);
  * @contact  group@hyperf.io
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
+
 namespace Hyperf\ConfigApollo\Listener;
 
+use GuzzleHttp\Exception\GuzzleException;
 use Hyperf\Command\Event\BeforeHandle;
 use Hyperf\ConfigApollo\Option;
 use Hyperf\ConfigApollo\PipeMessage;
@@ -34,7 +36,7 @@ class BootProcessListener extends OnPipeMessageListener
 
     public function process(object $event)
     {
-        if (! $this->config->get('apollo.enable', false)) {
+        if (!$this->config->get('apollo.enable', false)) {
             return;
         }
 
@@ -44,7 +46,7 @@ class BootProcessListener extends OnPipeMessageListener
                 $data = new PipeMessage($configs);
 
                 $option = $this->client->getOption();
-                if (! $option instanceof Option) {
+                if (!$option instanceof Option) {
                     return;
                 }
                 $cacheKey = $option->buildCacheKey($data->namespace);
@@ -67,9 +69,18 @@ class BootProcessListener extends OnPipeMessageListener
                 $callbacks[$namespace] = $ipcCallback;
             }
         }
-        $this->client->pull($namespaces, $callbacks);
+        try {
+            $this->client->pull($namespaces, $callbacks);
+        } catch (GuzzleException $exception) {
+            $this->logger->error('Can not pull config from apollo !');
+            if($event instanceof BeforeWorkerStart && file_exists(BASE_PATH . '/.env')){
+                $this->logger->debug('Start Worker with local env file.');
+            }else{
+                throw $exception;
+            }
+        }
 
-        if (! $this->config->get('apollo.use_standalone_process', true)) {
+        if (!$this->config->get('apollo.use_standalone_process', true)) {
             Coroutine::create(function () use ($namespaces, $callbacks) {
                 $interval = $this->config->get('apollo.interval', 5);
                 retry(INF, function () use ($namespaces, $callbacks, $interval) {
