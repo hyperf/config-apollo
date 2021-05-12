@@ -9,11 +9,13 @@ declare(strict_types=1);
  * @contact  group@hyperf.io
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
+
 namespace Hyperf\ConfigApollo;
 
 use Closure;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Utils\Coroutine;
+use Hyperf\Utils\Exception\ParallelExecutionException;
 use Hyperf\Utils\Parallel;
 
 class Client implements ClientInterface
@@ -43,7 +45,8 @@ class Client implements ClientInterface
         array $callbacks = [],
         Closure $httpClientFactory,
         ?ConfigInterface $config = null
-    ) {
+    )
+    {
         $this->option = $option;
         $this->callbacks = $callbacks;
         $this->httpClientFactory = $httpClientFactory;
@@ -52,7 +55,7 @@ class Client implements ClientInterface
 
     public function pull(array $namespaces, array $callbacks = []): void
     {
-        if (! $namespaces) {
+        if (!$namespaces) {
             return;
         }
         if (Coroutine::inCoroutine()) {
@@ -94,7 +97,7 @@ class Client implements ClientInterface
         foreach ($namespaces as $namespace) {
             $parallel->add(function () use ($option, $httpClientFactory, $namespace) {
                 $client = $httpClientFactory();
-                if (! $client instanceof \GuzzleHttp\Client) {
+                if (!$client instanceof \GuzzleHttp\Client) {
                     throw new \RuntimeException('Invalid http client.');
                 }
                 $releaseKey = ReleaseKey::get($option->buildCacheKey($namespace), null);
@@ -105,20 +108,24 @@ class Client implements ClientInterface
                     ],
                 ]);
                 if ($response->getStatusCode() === 200 && strpos($response->getHeaderLine('Content-Type'), 'application/json') !== false) {
-                    $body = json_decode((string) $response->getBody(), true);
+                    $body = json_decode((string)$response->getBody(), true);
                     $result = [
                         'configurations' => $body['configurations'] ?? [],
                         'releaseKey' => $body['releaseKey'] ?? '',
                     ];
                 } else {
-                    // The status code is not 200 when the config is not modified in apollo.
-                    // So, we shouldn't change the configurations.
-                    $result = [];
+                    throw new \GuzzleHttp\Exception\ServerException('Apollo server error ! code:' . $response->getStatusCode(), null, $response);
                 }
                 return $result;
             }, $namespace);
         }
-        return $parallel->wait();
+        try {
+            $result = $parallel->wait();
+        } catch (ParallelExecutionException $e) {
+            throw $e->getThrowables();
+        }
+
+        return $result;
     }
 
     private function blockingPull(array $namespaces): array
@@ -128,7 +135,7 @@ class Client implements ClientInterface
         $httpClientFactory = $this->httpClientFactory;
         foreach ($namespaces as $namespace) {
             $client = $httpClientFactory();
-            if (! $client instanceof \GuzzleHttp\Client) {
+            if (!$client instanceof \GuzzleHttp\Client) {
                 throw new \RuntimeException('Invalid http client.');
             }
             $releaseKey = ReleaseKey::get($this->option->buildCacheKey($namespace), null);
@@ -139,15 +146,13 @@ class Client implements ClientInterface
                 ],
             ]);
             if ($response->getStatusCode() === 200 && strpos($response->getHeaderLine('Content-Type'), 'application/json') !== false) {
-                $body = json_decode((string) $response->getBody(), true);
+                $body = json_decode((string)$response->getBody(), true);
                 $result[$namespace] = [
                     'configurations' => $body['configurations'] ?? [],
                     'releaseKey' => $body['releaseKey'] ?? '',
                 ];
             } else {
-                // The status code is not 200 when the config is not modified in apollo.
-                // So, we shouldn't change the configurations.
-                $result[$namespace] = [];
+                throw new \GuzzleHttp\Exception\ServerException('Apollo server error ! code:' . $response->getStatusCode(), null, $response);
             }
         }
         return $result;
