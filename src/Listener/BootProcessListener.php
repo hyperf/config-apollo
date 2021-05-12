@@ -14,6 +14,7 @@ namespace Hyperf\ConfigApollo\Listener;
 
 use GuzzleHttp\Exception\GuzzleException;
 use Hyperf\Command\Event\BeforeHandle;
+use Hyperf\ConfigApollo\Exceptions\ApolloClientException;
 use Hyperf\ConfigApollo\Option;
 use Hyperf\ConfigApollo\PipeMessage;
 use Hyperf\ConfigApollo\ReleaseKey;
@@ -71,7 +72,7 @@ class BootProcessListener extends OnPipeMessageListener
         }
         try {
             $this->client->pull($namespaces, $callbacks);
-        } catch (GuzzleException $exception) {
+        } catch (ApolloClientException $exception) {
             $this->logger->error('Can not pull config from apollo !');
             if($event instanceof BeforeWorkerStart && file_exists(BASE_PATH . '/.env')){
                 $this->logger->debug('Start Worker with local env file.');

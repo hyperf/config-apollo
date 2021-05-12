@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Hyperf\ConfigApollo;
 
 use Closure;
+use Hyperf\ConfigApollo\Exceptions\ApolloClientException;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Utils\Coroutine;
 use Hyperf\Utils\Exception\ParallelExecutionException;
@@ -114,7 +115,7 @@ class Client implements ClientInterface
                         'releaseKey' => $body['releaseKey'] ?? '',
                     ];
                 } else {
-                    throw new \GuzzleHttp\Exception\ServerException('Apollo server error ! code:' . $response->getStatusCode(), null, $response);
+                    throw new ApolloClientException('Apollo server error !', $response->getStatusCode());
                 }
                 return $result;
             }, $namespace);
@@ -122,7 +123,7 @@ class Client implements ClientInterface
         try {
             $result = $parallel->wait();
         } catch (ParallelExecutionException $e) {
-            throw $e->getThrowables();
+            throw new ApolloClientException('Coroutine pull error !', -1);
         }
 
         return $result;
@@ -152,7 +153,7 @@ class Client implements ClientInterface
                     'releaseKey' => $body['releaseKey'] ?? '',
                 ];
             } else {
-                throw new \GuzzleHttp\Exception\ServerException('Apollo server error ! code:' . $response->getStatusCode(), null, $response);
+                throw new ApolloClientException('Apollo server error !', $response->getStatusCode());
             }
         }
         return $result;
