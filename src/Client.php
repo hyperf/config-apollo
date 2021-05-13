@@ -114,6 +114,8 @@ class Client implements ClientInterface
                         'configurations' => $body['configurations'] ?? [],
                         'releaseKey' => $body['releaseKey'] ?? '',
                     ];
+                } else if ($response->getStatusCode() === 304) {
+                    return [];
                 } else {
                     throw new ApolloClientException('Apollo server error !', $response->getStatusCode());
                 }
@@ -123,7 +125,11 @@ class Client implements ClientInterface
         try {
             $result = $parallel->wait();
         } catch (ParallelExecutionException $e) {
-            throw new ApolloClientException('Coroutine pull error !', -1);
+            echo $e->getTraceAsString();
+            foreach ($e->getThrowables() as $key => $value) {
+                echo $value->getTraceAsString();
+            }
+            throw new ApolloClientException('Coroutine pull error !', -1, $e);
         }
 
         return $result;
