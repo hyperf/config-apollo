@@ -20,4 +20,7 @@ return [
     ],
     'interval' => 5,
     'strict_mode' => false,
+    'env_namespace'=>[
+        'env'
+    ],
 ];

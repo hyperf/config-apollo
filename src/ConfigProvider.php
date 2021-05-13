@@ -11,6 +11,7 @@ declare(strict_types=1);
  */
 namespace Hyperf\ConfigApollo;
 
+use Hyperf\ConfigApollo\Command\ApolloCommand;
 use Hyperf\ConfigApollo\Listener\BootProcessListener;
 use Hyperf\ConfigApollo\Listener\OnPipeMessageListener;
 use Hyperf\ConfigApollo\Process\ConfigFetcherProcess;
@@ -25,6 +26,9 @@ class ConfigProvider
             ],
             'processes' => [
                 ConfigFetcherProcess::class,
+            ],
+            'commands' => [
+                ApolloCommand::class,
             ],
             'listeners' => [
                 BootProcessListener::class,
