@@ -14,6 +14,7 @@ namespace Hyperf\ConfigApollo;
 use Hyperf\ConfigApollo\ClientInterface as ApolloClientInterface;
 use Hyperf\ConfigCenter\AbstractDriver;
 use Hyperf\ConfigCenter\Contract\ClientInterface;
+use Hyperf\ConfigCenter\Event\ConfigChanged;
 use Hyperf\Coordinator\Constants;
 use Hyperf\Coordinator\CoordinatorManager;
 use Hyperf\Engine\Channel;
@@ -56,6 +57,7 @@ class ApolloDriver extends AbstractDriver
             $config = $this->pull();
             if ($config !== $prevConfig) {
                 $this->syncConfig($config);
+                $this->event(new ConfigChanged($config, $prevConfig));
                 $prevConfig = $config;
             }
         });
@@ -76,6 +78,7 @@ class ApolloDriver extends AbstractDriver
                     $config = $this->client->parallelPull($namespaces);
                     if ($config !== $prevConfig) {
                         $this->syncConfig($config);
+                        $this->event(new ConfigChanged($config, $prevConfig));
                         $prevConfig = $config;
                     }
                 } catch (Throwable $exception) {
